@@ -24,7 +24,11 @@ export const getMessages=async(req,res)=>{
         const {id:userToChatId}=req.params;
         const myId=req.user._id;
         const messages=await Message.find({
-            $or:[{receiverId:userToChatId},{senderId:myId}]
+            /*$.or:[{receiverId:userToChatId},{senderId:myId}] //wrong only fetches one side mssgs which was causing the bug debug2*/
+            $or:[
+                { senderId: myId, receiverId: userToChatId },
+                { senderId: userToChatId, receiverId: myId }
+            ]
         }
     );
         res.status(200).json(messages)

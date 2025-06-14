@@ -27,34 +27,56 @@ const ChatContainer = () => {
     <div className='flex-1 flex flex-col overflow-auto'>
       <ChatHeader />
 
-     <div className='flex-1 overflow-auto p-4 space-y-4'>
-    {messages.map((message)=>(
-      <div 
-      key={message._id}
-      className={`chat ${message.senderId===authUser._id?"chat-end":"chat-start"}`}  //our messages at right..other guyss right
+    <div className='flex-1 overflow-auto p-4 space-y-4'>
+  {messages
+   .filter((message) => {
+  const senderId = message.senderId?.toString?.();
+  const receiverId = message.receiverId?.toString?.();
+  console.log("Sender:", message.senderId, "Receiver:", message.receiverId);
+
+  return (
+    (senderId === authUser._id && receiverId === selectedUser._id) ||
+    (senderId === selectedUser._id && receiverId === authUser._id)
+    
+  );
+})
+
+    .map((message) => (
+      <div
+        key={message._id}
+        className={`chat ${message.senderId.toString() === authUser._id ? "chat-end" : "chat-start"}`}  // our messages at right
       >
         <div className='chat-image avatar'>
           <div className='size-10 rounded-full border'>
-            <img src={`${message.senderId===authUser._id?authUser.profilepic || "/avatar.png":selectedUser.profilepic || "/avatar.png"}`} alt="profilepic" />
+            <img
+              src={`${
+                message.senderId.toString() === authUser._id
+                  ? authUser.profilepic || "/avatar.png"
+                  : selectedUser.profilepic || "/avatar.png"
+              }`}
+              alt="profilepic"
+            />
           </div>
         </div>
-        <div className='chat-header mb-1 '>
+        <div className='chat-header mb-1'>
           <time className='text-xs opacity-50 ml-1'>
-            {formatMessageTime(message.createdAt)} {/*time of messg small to the left dull txt */}
+            {formatMessageTime(message.createdAt)}
           </time>
         </div>
         <div className='chat-bubble flex flex-col'>
-          {message.image && (  //if the message is text
-            <img src={message.image} alt="imageMessage" className="sm:max-w-[200px] rounded-md mb-2"/>
-          )
-          }
-           {message.text && (<p>{message.text}</p>)}
-
+          {message.image && (
+            <img
+              src={message.image}
+              alt="imageMessage"
+              className="sm:max-w-[200px] rounded-md mb-2"
+            />
+          )}
+          {message.text && <p>{message.text}</p>}
         </div>
-
       </div>
     ))}
-     </div>
+</div>
+
 
       <MessageInput />
     </div>
