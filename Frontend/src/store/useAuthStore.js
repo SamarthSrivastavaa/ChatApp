@@ -3,9 +3,9 @@ import {create} from "zustand"
 import { axiosInstance } from "../lib/axios"
 import toast from "react-hot-toast";
 
+//as we login we immediately cnnct to socket
 
-
-export const useAuthStore=create((set)=>(
+export const useAuthStore=create((set,get)=>(
     //now you can destructure the useAuthStore and use any state anywhere in the codebase
     {
         authUser:null,
@@ -14,6 +14,7 @@ export const useAuthStore=create((set)=>(
         isUpdatingProfile:false,
         isCheckingAuth:true,
         onlineUsers:[],
+        socket:null,
         checkAuth:async()=>{//well call this func as sooon aswe visit our app..see app.jsx
             try {
                 const res=await axiosInstance.get("/auth/check");
@@ -55,6 +56,7 @@ export const useAuthStore=create((set)=>(
             try {
                 const res=await axiosInstance.post("/auth/login",data)
                 set({authUser:res.data})
+                get().connectSocket()  //connecting socket immediately after login
                 toast.success("Logged in successfully")
             } catch (error) {
                 toast.error("Error logging in")
@@ -72,6 +74,9 @@ export const useAuthStore=create((set)=>(
             finally{
                 set({isUpdatingProfile:false})
             }
+        },
+        getSocket:()=>{
+            
         }
     }
 ))
