@@ -2,6 +2,7 @@ import { create } from "zustand";
 import toast from "react-hot-toast";
 import { axiosInstance } from "../lib/axios";
 import { Truck } from "lucide-react";
+import { useAuthStore } from "./useAuthStore";
 
 export const useChatStore=create((set,get)=>({
     messages:[],
@@ -47,6 +48,24 @@ export const useChatStore=create((set,get)=>({
         } catch (error) {
             toast.error(error.response.data.message)
         }
+    },
+    //realtime message array updation
+    listenToMessages:()=>{
+        const selectedUser=get()
+        if(!selectedUser){
+            return;
+        }
+        // const {socket}=useAuthStore;
+        const socket=useAuthStore.getState().socket
+        socket.on("newMessage",(newMessage=>{
+            set({messages:[...get().messages,newMessage]})
+        }))
+    },
+    //now callig ths in the chat container
+
+    stopListeningToMessages:()=>{
+         const socket=useAuthStore.getState().socket;
+         socket.off("newMessage")
     }
 
 }))

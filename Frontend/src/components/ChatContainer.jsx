@@ -5,12 +5,27 @@ import MessageInput from './MessageInput'
 import MessageSkeleton from './skeletons/MessageSkeleton'
 import { useAuthStore } from '../store/useAuthStore'
 import { formatMessageTime } from '../lib/utils'
+import { useRef } from 'react'
+// const messageEndRef=useRef(null);
+
 const ChatContainer = () => {
   const {authUser}=useAuthStore()
-  const {messages,getMessages,isMessagesLoading,selectedUser}=useChatStore()
+  const {messages,getMessages,isMessagesLoading,selectedUser,listenToMessages,stopListeningToMessages}=useChatStore();
+
+  // useEffect(()=>{
+  //   if(messageEndRef.current && messages){
+  //   messageEndRef.current.scrollIntoView({behaviour:"smooth"})}
+  // },[messages])
+
+
+
   useEffect(()=>{
     getMessages(selectedUser._id)  //check the syntax we pass this userId (other person's) in the getmessagws func
-  },[selectedUser._id])  //check if you need getMessages state as well?
+
+    listenToMessages()
+    return()=>stopListeningToMessages;
+
+  },[selectedUser._id,getMessages,listenToMessages,stopListeningToMessages])  //check if you need getMessages state as well?
   if(isMessagesLoading){
     return(
       <div className="flex-1 flex flex-col overflow-auto">  {/*flex-1 allows this div to grow and fill all available space. */}
@@ -45,6 +60,7 @@ const ChatContainer = () => {
       <div
         key={message._id}
         className={`chat ${message.senderId.toString() === authUser._id ? "chat-end" : "chat-start"}`}  // our messages at right
+        // ref={messageEndRef}
       >
         <div className='chat-image avatar'>
           <div className='size-10 rounded-full border'>

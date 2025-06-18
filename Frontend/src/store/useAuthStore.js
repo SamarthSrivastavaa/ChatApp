@@ -2,8 +2,11 @@
 import {create} from "zustand"
 import { axiosInstance } from "../lib/axios"
 import toast from "react-hot-toast";
+import { io } from "socket.io-client";
 
-//as we login we immediately cnnct to socket
+const BASE_URL="http://localhost:5001"
+//as we login/signup we immediately cnnct to socket
+//after checkAuth too as it checks if the user's been authenticated or not at every refresh so connection to socket'll also be done for auth'ed users after evry rfrsh
 
 export const useAuthStore=create((set,get)=>(
     //now you can destructure the useAuthStore and use any state anywhere in the codebase
@@ -15,11 +18,13 @@ export const useAuthStore=create((set,get)=>(
         isCheckingAuth:true,
         onlineUsers:[],
         socket:null,
+
         checkAuth:async()=>{//well call this func as sooon aswe visit our app..see app.jsx
             try {
                 const res=await axiosInstance.get("/auth/check");
                 console.log("check response" ,res.data)
                 set({authUser:res.data})   //setting auth state with the response.data
+                get().connectSocket()
                 
             } catch (error) {
                 console.log("Error in checkAuth",error)
@@ -34,6 +39,7 @@ export const useAuthStore=create((set,get)=>(
             try {
                const res=await axiosInstance.post("/auth/signup",data)
                set({authUser:res.data})
+               get().connectSocket()
                 toast.success("Account created successfully!");
             } catch (error) {
                 toast.error(error.response.data.message)
@@ -47,6 +53,7 @@ export const useAuthStore=create((set,get)=>(
            try {
             await axiosInstance.post("/auth/logout");
             set({authUser:null})
+            get().disconnectSocket()  //disconnecting socket after logout
             toast.success("User successfully logged out")
            } catch (error) {
             toast.error(error.response.data.message)
@@ -75,8 +82,37 @@ export const useAuthStore=create((set,get)=>(
                 set({isUpdatingProfile:false})
             }
         },
-        getSocket:()=>{
-            
+        connectSocket:()=>{
+            const {authUser}=get()
+            //if user not authenticated.//or alr connecteddont try to even create this connection
+            if (!authUser || get().socket?.connected) return;
+            const socket=io(BASE_URL,{
+                query:{
+                    userId:authUser._id
+                }
+            });
+            socket.connect()  //opens the socket
+
+            set({socket:socket});
+
+            //setting the online users array..all connceted to socket
+            socket.on("getOnlineUsers",(userIds)=>{
+                set({onlineUsers:userIds})
+            })
+           
+        },
+        disconnectSocket:()=>{
+            //if connected->disc
+            if(get().socket?.connected()){
+                get().socket.disconnect()
+            }
         }
+
     }
 ))
+
+/*Looks up an existing Manager for multiplexing. If the user summons:
+io('http://localhost/a'); io('http://localhost/b');
+We reuse the existing instance based on same scheme/port/host, and we initialize sockets for each namespace.
+
+ */

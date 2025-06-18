@@ -13,14 +13,27 @@ const io=new Server(server,
     }
 )
 
+const userSocketMap={}  //userid:socketId
 io.on("connection",(socket)=>{
     console.log("A user connected",socket.id); //An unique identifier for the session.
-
+    const userId=socket.handshake.query.userId;
+    if(userId){
+        userSocketMap[userId]=socket.id
+    }
+    //io.emit() is used to send events to all the connected clients/broadcasting it
+    io.emit("getOnlineUsers",Object.keys(userSocketMap))
     //listening for disconnect now
     socket.on("disconnect",()=>{
+        delete userSocketMap[userId];
+         io.emit("getOnlineUsers",Object.keys(userSocketMap))
         console.log("A user disconnected",socket.id)
+        
     })
 })
+
+export function getReceiverSocketId(userId){
+    return userSocketMap[userId]
+}
 
 export {io,app,server}
 
